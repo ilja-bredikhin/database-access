@@ -1,0 +1,95 @@
+<!-- thermometer_app/thermometers/templates/registration/login.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Вход</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Общие стили */
+        body {
+            background-color: #f5f1e8; /* Пастельный кофейный фон */
+            font-family: 'Roboto', sans-serif; /* Современный шрифт */
+            color: #5c4d42; /* Кофейный цвет текста */
+            margin: 0;
+            padding: 0;
+        }
+
+        h1, h2 {
+            font-family: 'Pacifico', cursive; /* Красивый курсивный шрифт */
+            color: #8b6f56; /* Кофейный цвет заголовков */
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        h2 {
+            margin-top: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            padding: 20px;
+        }
+
+        .login-block {
+            width: 45%;
+            margin-bottom: 30px;
+            background-color: #f9f5ed; /* Светло-кофейный фон для блоков */
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .login-block form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .login-block input {
+            margin: 10px 0;
+            padding: 10px;
+            width: 80%;
+            border: 1px solid #8b6f56;
+            border-radius: 8px;
+        }
+
+        .login-block button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #8b6f56;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .login-block button:hover {
+            background-color: #5c4d42;
+        }
+
+        /* Подключение шрифтов */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+    </style>
+</head>
+<body>
+    <h1>Вход</h1>
+    <div class="container">
+        <div class="login-block">
+            <h2>Добро пожаловать!</h2>
+            <form method="post">
+                {% csrf_token %}
+                <input type="text" name="username" placeholder="Имя пользователя" required>
+                <input type="password" name="password" placeholder="Пароль" required>
+                <button type="submit">Войти</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

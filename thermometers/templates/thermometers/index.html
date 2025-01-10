@@ -1,0 +1,202 @@
+<!-- thermometer_app/thermometers/templates/thermometers/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Термометры</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Общие стили */
+        body {
+            background-color: #f5f1e8; /* Пастельный кофейный фон */
+            font-family: 'Roboto', sans-serif; /* Шрифт */
+            color: #5c4d42; /* Кофейный цвет текста */
+            margin: 0;
+            padding: 0;
+        }
+
+        h1, h2 {
+            font-family: 'Pacifico', cursive; /* Красивый курсивный шрифт */
+            color: #8b6f56; /* Кофейный цвет заголовков */
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        h2 {
+            margin-top: 20px;
+        }
+
+        canvas {
+            margin: 10px 0;
+            border-radius: 8px; /* Скругленные углы для графиков */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Легкая тень */
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            padding: 20px;
+        }
+
+        .thermometer-block {
+            width: 45%;
+            margin-bottom: 30px;
+            background-color: #f9f5ed; /* Светло-кофейный фон для блоков */
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .logout-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #8b6f56;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .logout-link:hover {
+            color: #5c4d42;
+        }
+
+        /* Подключение шрифтов */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+    </style>
+</head>
+<body>
+    <h1>Данные термометров</h1>
+    <a href="{% url 'logout' %}" class="logout-link">Выйти</a> <!-- Ссылка для выхода -->
+    <div class="container">
+        {% for thermometer in thermometers %}
+            <div class="thermometer-block">
+                <h2>{{ thermometer.name }} ({{ thermometer.location }})</h2>
+                <canvas id="chart-{{ thermometer.id }}" width="400" height="200"></canvas>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        // Функция для получения данных с сервера
+        async function fetchData(thermometerId) {
+            const response = await fetch(`/api/measurements/?thermometer=${thermometerId}`);
+            if (!response.ok) {
+                console.error(`Failed to fetch data for thermometer ${thermometerId}: ${response.status}`);
+                return [];
+            }
+            const data = await response.json();
+            
+            // Сортируем данные по времени (timestamp) и оставляем только последние 30 записей
+            return data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 30);
+        }
+
+        // Функция для отрисовки графика
+        function drawChart(canvasId, labels, data) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Температура (°C)',
+                        data: data,
+                        borderColor: '#8b6f56', // Кофейный цвет линии
+                        backgroundColor: 'rgba(139, 111, 86, 0.2)', // Полупрозрачный кофейный фон
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#8b6f56', // Кофейный цвет точек
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Время',
+                                color: '#5c4d42', // Кофейный цвет текста
+                            },
+                            ticks: {
+                                color: '#5c4d42', // Кофейный цвет текста
+                                autoSkip: true, // Автоматически пропускать метки
+                                maxTicksLimit: 10, // Максимальное количество меток на оси X
+                            },
+                            reverse: true,
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Температура (°C)',
+                                color: '#5c4d42', // Кофейный цвет текста
+                            },
+                            ticks: {
+                                color: '#5c4d42', // Кофейный цвет текста
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#5c4d42', // Кофейный цвет текста
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Функция для обновления графика
+        async function updateChart(chart, thermometerId) {
+            const data = await fetchData(thermometerId);
+            const labels = data.map(item => new Date(item.timestamp).toLocaleString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            })); // Используем локальное время
+            const temperatures = data.map(item => item.temperature);
+
+            console.log(`Обновление данных для термометра ${thermometerId}:`, data);
+
+            // Обновляем график
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = temperatures;
+            chart.update();
+        }
+
+        // Функция для инициализации графика термометра
+        async function initializeThermometerChart(thermometerId, canvasId) {
+            const data = await fetchData(thermometerId);
+
+            // Формируем метки и данные для графика
+            const labels = data.map(item => new Date(item.timestamp).toLocaleString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            })); // Используем локальное время
+            const temperatures = data.map(item => item.temperature);
+
+            // Создаём график
+            const chart = drawChart(canvasId, labels, temperatures);
+
+            // Запускаем обновление графика
+            setInterval(() => {
+                updateChart(chart, thermometerId);
+            }, 5000); // Обновление каждые 5 секунд
+        }
+
+        // Инициализация всех термометров
+        document.addEventListener('DOMContentLoaded', () => {
+            {% for thermometer in thermometers %}
+                initializeThermometerChart({{ thermometer.id }}, `chart-{{ thermometer.id }}`);
+            {% endfor %}
+        });
+    </script>
+</body>
+</html>
